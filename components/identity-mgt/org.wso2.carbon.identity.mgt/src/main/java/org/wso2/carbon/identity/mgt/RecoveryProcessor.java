@@ -20,6 +20,7 @@
 package org.wso2.carbon.identity.mgt;
 
 import org.apache.axis2.context.MessageContext;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.base.IdentityException;
@@ -68,6 +69,7 @@ public class RecoveryProcessor {
     private final static String USER_STORE_DOMAIN = "userstore-domain";
     private final static String USER_NAME = "user-name";
     private final static String TENANT_DOMAIN = "tenant-domain";
+    private final static String CALLBACK = "callback";
     private final static String FIRST_NAME = "first-name";
     private final static String CONFIRMATION_CODE = "confirmation-code";
     private final static String TEMPORARY_PASSWORD = "temporary-password";
@@ -177,6 +179,13 @@ public class RecoveryProcessor {
         emailNotificationData.setTagData(USER_NAME, userName);
         emailNotificationData.setTagData(TENANT_DOMAIN, domainName);
 
+
+        if (StringUtils.isNotBlank(IdentityUtil.getIdentityMgtCallback())) {
+            String callback = IdentityUtil.getIdentityMgtCallback();
+            emailNotificationData.setTagData(CALLBACK, callback);
+        }
+
+
         if ((notificationAddress == null) || (notificationAddress.trim().length() < 0)) {
             throw IdentityException
                     .error("Notification sending failure. Notification address is not defined for user : "
@@ -195,6 +204,8 @@ public class RecoveryProcessor {
             config = configBuilder.loadConfiguration(ConfigType.EMAIL, StorageType.REGISTRY, tenantId);
         } catch (Exception e1) {
             throw IdentityException.error("Error while loading email templates for user : " + userId, e1);
+        } finally {
+            IdentityUtil.clearIdentityMgtCallback();
         }
 
         if (recoveryDTO.getNotification() != null) {
@@ -551,6 +562,11 @@ public class RecoveryProcessor {
         emailNotificationData.setTagData(TENANT_DOMAIN, domainName);
         emailNotificationData.setSendTo(notificationAddress);
 
+        if (StringUtils.isNotBlank(IdentityUtil.getIdentityMgtCallback())) {
+            String callback = IdentityUtil.getIdentityMgtCallback();
+            emailNotificationData.setTagData(CALLBACK, callback);
+        }
+
         Config config = null;
         ConfigBuilder configBuilder = ConfigBuilder.getInstance();
         try {
@@ -559,6 +575,8 @@ public class RecoveryProcessor {
         } catch (Exception e1) {
             throw IdentityException.error("Error occurred while loading email templates for user : "
                     + userId, e1);
+        } finally {
+            IdentityUtil.clearIdentityMgtCallback();
         }
 
         if (notificationBean.getNotification() != null) {

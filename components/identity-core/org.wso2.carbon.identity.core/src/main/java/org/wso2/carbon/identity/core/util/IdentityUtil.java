@@ -108,6 +108,8 @@ public class IdentityUtil {
     private static Map<String, IdentityCookieConfig> identityCookiesConfigurationHolder = new HashMap<>();
     private static Document importerDoc = null;
     private static ThreadLocal<IdentityErrorMsgContext> IdentityError = new ThreadLocal<IdentityErrorMsgContext>();
+    private static ThreadLocal<String> identityMgtCallback = new ThreadLocal<String>();
+
     private static final int ENTITY_EXPANSION_LIMIT = 0;
 
     /**
@@ -133,6 +135,31 @@ public class IdentityUtil {
     public static void clearIdentityErrorMsg() {
         IdentityError.remove();
     }
+
+    /**
+     * @return callback. This is used to send the login page of SP with recovery/signup email
+     */
+    public static String getIdentityMgtCallback() {
+        if (identityMgtCallback.get() == null) {
+            return null;
+        }
+        return identityMgtCallback.get();
+    }
+
+    /**
+     * @param callback
+     */
+    public static void setIdentityMgtCallback(String callback) {
+        identityMgtCallback.set(callback);
+    }
+
+    /**
+     * Clear the thread local variable identityMgtCallback
+     */
+    public static void clearIdentityMgtCallback() {
+        identityMgtCallback.remove();
+    }
+
 
     /**
      * Read configuration elements from the identity.xml
