@@ -26,6 +26,8 @@ public class IdentityMgtConstants {
     public static final String IDENTITY_MANAGEMENT_PATH =
             "/repository/components/org.wso2.carbon.identity.mgt";
 
+    public static final String EMAIL_TEMPLATE_PATH = "identity/config/emailTemplate";
+
     public static final String IDENTITY_MANAGEMENT_KEYS = IDENTITY_MANAGEMENT_PATH + "/keys";
 
     public static final String IDENTITY_MANAGEMENT_DATA = IDENTITY_MANAGEMENT_PATH + "/data";
