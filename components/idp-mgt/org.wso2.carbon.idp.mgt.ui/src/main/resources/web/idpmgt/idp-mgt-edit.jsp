@@ -90,7 +90,7 @@
     String ssoUrl = null;
     boolean isAuthnRequestSigned = false;
     boolean isEnableAssertionEncription = false;
-    boolean isEnableAssertionSigning = true;
+    boolean isEnableAssertionSigning = false;
 
     String signatureAlgorithm = IdentityApplicationConstants.XML.SignatureAlgorithm.RSA_SHA1;
     String digestAlgorithm = IdentityApplicationConstants.XML.DigestAlgorithm.SHA1;
@@ -99,9 +99,9 @@
     String forceAuthentication = "as_request";
     String attributeConsumingServiceIndex = null;
     String includeAuthenticationContext = "yes";
-    boolean includeNameIdPolicy = true;
-    boolean includeProtocolBinding = true;
-    boolean includeCert = true;
+    boolean includeNameIdPolicy = false;
+    boolean includeProtocolBinding = false;
+    boolean includeCert = false;
 
     String requestMethod = "redirect";
     boolean isSLOEnabled = false;
