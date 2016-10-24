@@ -187,7 +187,8 @@ public class IdentityUtil {
 
     public static IdentityEventListenerConfig readEventListenerProperty(String type, String name) {
         IdentityEventListenerConfigKey identityEventListenerConfigKey = new IdentityEventListenerConfigKey(type, name);
-        IdentityEventListenerConfig identityEventListenerConfig = eventListenerConfiguration.get(identityEventListenerConfigKey);
+        IdentityEventListenerConfig identityEventListenerConfig = eventListenerConfiguration.get
+                (identityEventListenerConfigKey);
         return identityEventListenerConfig;
     }
 
