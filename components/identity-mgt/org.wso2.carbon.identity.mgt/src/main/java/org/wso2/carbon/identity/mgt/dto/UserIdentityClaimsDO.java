@@ -74,8 +74,6 @@ public class UserIdentityClaimsDO implements Serializable {
             String lastFailedAttemptTime = userDataMap.get(UserIdentityDataStore.LAST_FAILED_LOGIN_ATTEMPT_TIME).trim();
             if(!lastFailedAttemptTime.isEmpty()) {
                 setLastFailAttemptTime(Long.parseLong(lastFailedAttemptTime));
-            } else {
-                setFailAttempts(0);
             }
         }
         if (userDataMap.get(UserIdentityDataStore.UNLOCKING_TIME) != null) {
@@ -102,8 +100,6 @@ public class UserIdentityClaimsDO implements Serializable {
             String lastLogonTime = userDataMap.get(UserIdentityDataStore.LAST_LOGON_TIME).trim();
             if(!lastLogonTime.isEmpty()) {
                 setLastLogonTime(Long.parseLong(lastLogonTime));
-            } else {
-                setLastLogonTime(0);
             }
         }
         if (userDataMap.get(UserIdentityDataStore.ACCOUNT_LOCK) != null) {
