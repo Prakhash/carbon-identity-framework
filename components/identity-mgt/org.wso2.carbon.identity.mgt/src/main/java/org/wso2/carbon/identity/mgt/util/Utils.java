@@ -56,6 +56,7 @@ import java.util.Map;
 public class Utils {
 
     private static final Log log = LogFactory.getLog(Utils.class);
+    private static ThreadLocal<String> identityMgtCallback = new ThreadLocal<String>();
 
     private Utils() {
     }
@@ -384,4 +385,27 @@ public class Utils {
         return PolicyEngine.getPolicy(new ByteArrayInputStream(policyString.getBytes()));
 
     }
+
+
+    /**
+     * @return callback. This is used to send the login page of SP with recovery/signup email
+     */
+    public static String getIdentityMgtCallback() {
+        return identityMgtCallback.get();
+    }
+
+    /**
+     * @param callback
+     */
+    public static void setIdentityMgtCallback(String callback) {
+        identityMgtCallback.set(callback);
+    }
+
+    /**
+     * Clear the thread local variable identityMgtCallback
+     */
+    public static void clearIdentityMgtCallback() {
+        identityMgtCallback.remove();
+    }
+
 }
