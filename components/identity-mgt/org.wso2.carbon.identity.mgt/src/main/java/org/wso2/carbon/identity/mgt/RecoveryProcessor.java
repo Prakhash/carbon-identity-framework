@@ -180,8 +180,8 @@ public class RecoveryProcessor {
         emailNotificationData.setTagData(TENANT_DOMAIN, domainName);
 
 
-        if (StringUtils.isNotBlank(IdentityUtil.getIdentityMgtCallback())) {
-            String callback = IdentityUtil.getIdentityMgtCallback();
+        if (StringUtils.isNotBlank(Utils.getIdentityMgtCallback())) {
+            String callback = Utils.getIdentityMgtCallback();
             emailNotificationData.setTagData(CALLBACK, callback);
         }
 
@@ -205,7 +205,7 @@ public class RecoveryProcessor {
         } catch (Exception e1) {
             throw IdentityException.error("Error while loading email templates for user : " + userId, e1);
         } finally {
-            IdentityUtil.clearIdentityMgtCallback();
+            Utils.clearIdentityMgtCallback();
         }
 
         if (recoveryDTO.getNotification() != null) {
@@ -562,8 +562,8 @@ public class RecoveryProcessor {
         emailNotificationData.setTagData(TENANT_DOMAIN, domainName);
         emailNotificationData.setSendTo(notificationAddress);
 
-        if (StringUtils.isNotBlank(IdentityUtil.getIdentityMgtCallback())) {
-            String callback = IdentityUtil.getIdentityMgtCallback();
+        if (StringUtils.isNotBlank(Utils.getIdentityMgtCallback())) {
+            String callback = Utils.getIdentityMgtCallback();
             emailNotificationData.setTagData(CALLBACK, callback);
         }
 
@@ -576,7 +576,7 @@ public class RecoveryProcessor {
             throw IdentityException.error("Error occurred while loading email templates for user : "
                     + userId, e1);
         } finally {
-            IdentityUtil.clearIdentityMgtCallback();
+            Utils.clearIdentityMgtCallback();
         }
 
         if (notificationBean.getNotification() != null) {
