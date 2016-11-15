@@ -1692,8 +1692,9 @@ public class ApplicationDAOImpl implements ApplicationDAO {
         for (Map.Entry<String, InboundAuthenticationRequestConfig> entry : inboundAuthenticationRequestConfigMap
                 .entrySet()) {
             InboundAuthenticationRequestConfig inboundAuthenticationRequestConfig = entry.getValue();
-            AbstractInboundAuthenticatorConfig inboundAuthenticatorConfig =
-                    allCustomAuthenticators.remove(inboundAuthenticationRequestConfig.getInboundAuthType());
+            AbstractInboundAuthenticatorConfig inboundAuthenticatorConfig = allCustomAuthenticators.remove
+                    (getConfigTypeFromSPProperties(spProperties, inboundAuthenticationRequestConfig
+                            .getInboundAuthType()));
             if (inboundAuthenticatorConfig != null && inboundAuthenticationRequestConfig != null) {
                 Property[] sources = inboundAuthenticatorConfig.getConfigurationProperties();
                 Property[] destinations = inboundAuthenticationRequestConfig.getProperties();
@@ -1741,9 +1742,6 @@ public class ApplicationDAOImpl implements ApplicationDAO {
                 .toArray(new InboundAuthenticationRequestConfig[returnList
                         .size()]));
         return inboundAuthenticationConfig;
-
-
-
     }
 
     private String getConfigTypeFromSPProperties(List<ServiceProviderProperty> spProperties, String authType) throws SQLException {
