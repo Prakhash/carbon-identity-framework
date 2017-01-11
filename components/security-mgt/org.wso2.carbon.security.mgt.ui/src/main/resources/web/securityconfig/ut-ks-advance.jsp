@@ -399,6 +399,9 @@
     </tr>
     </tbody>
 </table>
+    <%
+        }
+    %>
 
 <carbon:paginator pageNumber="<%=pageNumberInt%>"
                   action="post"
@@ -564,7 +567,6 @@
 </div>
 </div>
 <%
-        }
 
         Map<String, Boolean> checkBoxMap = (Map<String, Boolean>) session.getAttribute("checkedRolesMap");
         String selectedBoxesStr = request.getParameter("selectedRoles");
