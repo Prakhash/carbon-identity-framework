@@ -368,7 +368,7 @@
 
         function deleteUser(user) {
             function doDelete() {
-                var userName = user;
+                var userName = encodeURIComponent(user);
                 $.ajax({
                     type: 'POST',
                     url: 'delete-finish-ajaxprocessor.jsp',
