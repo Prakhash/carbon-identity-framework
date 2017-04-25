@@ -179,11 +179,20 @@
     jQuery(document).ready(function () {
         jQuery('#domainId').keyup(function () {
                     $('#userStoreTypeSub strong').html(
-                            $(this).val()
+                            htmlEncode($(this).val())
                     );
                 }
         );
     });
+    function htmlEncode(value) {
+        // Create a in-memory div, set it's inner text(which jQuery automatically encodes)
+        // then grab the encoded contents back out.  The div never exists on the page.
+        var output = $('<div/>').text(value).html();
+        output = output.replace(/"/g, "&quot;");
+        output = output.replace(/'/g, '&#39;');
+
+        return output;
+    }
 
 
     var allPropertiesSelected = false;
@@ -902,7 +911,7 @@
                 var successMsg = new RegExp("true");
                 if (msg.search(successMsg) == -1) //if match failed
                 {
-                    CARBON.showErrorDialog(msg);
+                    CARBON.showErrorDialog(htmlEncode(msg));
                 } else {
                     CARBON.showInfoDialog("Connection is healthy");
                 }
