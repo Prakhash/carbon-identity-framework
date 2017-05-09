@@ -71,14 +71,7 @@
 				CarbonConstants.CONFIGURATION_CONTEXT);
         client = new AccountCredentialMgtConfigClient(cookie,
                 backendServerURL, configContext);
-             	
-		try {
-			emailConfig = client.loadEmailConfig();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
+        emailConfig = client.loadEmailConfig();
 		
 	} catch (Exception e) {
 		String message = resourceBundle
@@ -158,11 +151,11 @@
 	                                %>
 										<option 
 										value="<%=i%>" 
-										data-subject="<%=StringEscapeUtils.escapeHtml(Encode.forHtmlContent(emailSubject))%>"
-										data-body="<%=StringEscapeUtils.escapeHtml(Encode.forHtmlContent(emailBody))%>"
-										data-footer="<%=StringEscapeUtils.escapeHtml(Encode.forHtmlContent(emailFooter))%>"
-										data-templateName="<%=StringEscapeUtils.escapeHtml(Encode.forHtmlContent(templateName))%>"
-										><%=Encode.forHtmlContent(template.getDisplayName())%></option>
+										data-subject="<%=Encode.forHtmlAttribute(emailSubject)%>"
+										data-body="<%=Encode.forHtmlAttribute(emailBody)%>"
+										data-footer="<%=Encode.forHtmlAttribute(emailFooter)%>"
+										data-templateName="<%=Encode.forHtmlAttribute(templateName)%>"
+										><%=Encode.forHtmlAttribute(template.getDisplayName())%></option>
 									<% 
 									}									
                                 	%>
