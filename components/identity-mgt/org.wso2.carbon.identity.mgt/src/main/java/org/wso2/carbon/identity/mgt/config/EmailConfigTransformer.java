@@ -39,6 +39,7 @@ public class EmailConfigTransformer {
     }
 
     private static final Log log = LogFactory.getLog(EmailConfigTransformer.class);
+    private static final String escapeCharacter = "&#124;";
     
     public static EmailTemplateDTO[] transform(Properties props) throws IdentityException {
 
@@ -88,9 +89,9 @@ public class EmailConfigTransformer {
                 throw IdentityException.error("Cannot have | character in the template");
             }
 
-            String subject = contents[0];
-            String body = contents[1];
-            String footer = contents[2];
+            String subject = decodeSeparator(contents[0]);
+            String body = decodeSeparator(contents[1]);
+            String footer = decodeSeparator(contents[2]);
 
             if (log.isDebugEnabled()) {
                 log.debug("Template info - name:" + key + " subject:" + subject + " " + "body:"
@@ -123,11 +124,20 @@ public class EmailConfigTransformer {
                         + template.getBody() + " footer:" + template.getFooter());
             }
 
-            contents.append(template.getSubject()).append("|").append(template.getBody())
-                    .append("|").append(template.getFooter());
+            contents.append(encodeSeparator(template.getSubject())).append("|").append(encodeSeparator(template.getBody()))
+                    .append("|").append(encodeSeparator(template.getFooter()));
 
             props.setProperty(template.getName(), contents.toString());
         }
         return props;
     }
+
+    private static String encodeSeparator(String stringToEncode) {
+        return stringToEncode.replace("|", escapeCharacter);
+    }
+
+    private static String decodeSeparator(String stringToDecode) {
+        return stringToDecode.replace(escapeCharacter, "|");
+    }
+
 }
