@@ -128,6 +128,8 @@ public class UserIdentityManagementUtil {
         UserIdentityDataStore store = IdentityMgtConfig.getInstance().getIdentityDataStore();
         UserIdentityClaimsDO userIdentityDO = store.load(UserCoreUtil.removeDomainFromName(userName), userStoreManager);
         if (userIdentityDO != null) {
+            userIdentityDO.getUserDataMap().put(UserIdentityDataStore.ACCOUNT_LOCKED_REASON,
+                    IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString());
             userIdentityDO.setAccountLock(true);
             userIdentityDO.setUnlockTime(0);
             store.store(userIdentityDO, userStoreManager);
@@ -260,6 +262,7 @@ public class UserIdentityManagementUtil {
         UserIdentityDataStore store = IdentityMgtConfig.getInstance().getIdentityDataStore();
         UserIdentityClaimsDO userIdentityDO = store.load(UserCoreUtil.removeDomainFromName(userName), userStoreManager);
         if (userIdentityDO != null) {
+            userIdentityDO.getUserDataMap().put(UserIdentityDataStore.ACCOUNT_LOCKED_REASON, null);
             userIdentityDO.setAccountLock(false);
             userIdentityDO.setUnlockTime(0);
             store.store(userIdentityDO, userStoreManager);
