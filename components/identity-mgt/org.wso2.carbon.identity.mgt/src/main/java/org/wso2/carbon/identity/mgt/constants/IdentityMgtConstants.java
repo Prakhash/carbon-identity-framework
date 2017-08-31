@@ -242,7 +242,7 @@ public class IdentityMgtConstants {
 
     public enum LockedReason {
         ADMIN_INITIATED,
-        MAX_ATTEMT_EXCEEDED,
+        MAX_ATTEMPTS_EXCEEDED,
         UNVERIFIED
     }
 }
