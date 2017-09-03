@@ -869,16 +869,24 @@ public class FrameworkUtils {
         if (authenticatedIdPs != null && !authenticatedIdPs.isEmpty()) {
 
             for (AuthenticatorConfig authenticatorConfig : authenticatorConfigs) {
+
+                String authenticatorName = authenticatorConfig.getName();
                 List<String> authenticatorIdps = authenticatorConfig.getIdpNames();
 
                 for (String authenticatorIdp : authenticatorIdps) {
-                    AuthenticatedIdPData authenticatedIdPData = authenticatedIdPs
-                            .get(authenticatorIdp);
+                    AuthenticatedIdPData authenticatedIdPData = authenticatedIdPs.get(authenticatorIdp);
 
-                    if (authenticatedIdPData != null
-                        && authenticatedIdPData.getIdpName().equals(authenticatorIdp)) {
-                        idpAuthenticatorMap.put(authenticatorIdp, authenticatorConfig);
-                        break;
+                    if (authenticatedIdPData != null && authenticatedIdPData.getIdpName().equals(authenticatorIdp)) {
+
+                        if (FrameworkConstants.LOCAL.equals(authenticatedIdPData.getIdpName())) {
+                            if (authenticatedIdPData.isAlreadyAuthenticatedUsing(authenticatorName)) {
+                                idpAuthenticatorMap.put(authenticatorIdp, authenticatorConfig);
+                                break;
+                            }
+                        } else {
+                            idpAuthenticatorMap.put(authenticatorIdp, authenticatorConfig);
+                            break;
+                        }
                     }
                 }
             }
