@@ -1887,9 +1887,41 @@ public class ApplicationDAOImpl implements ApplicationDAO {
 
             Arrays.sort(authenticationSteps, comparator);
 
+            int numSteps = authenticationSteps.length;
+            // We check if the steps have consecutive step numbers
+            if (numSteps > 0 && authenticationSteps[numSteps-1].getStepOrder() != numSteps) {
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Authentication Step Numbers are not consecutive in application with ID: + " +
+                            applicationId+". Probably caused by the forced deletion of IDP associated in an " +
+                            "authentication step. Reordering the authentication step numbers.");
+                }
+                // iterate through the steps and fix step order
+                int count = 1;
+                for (AuthenticationStep step : authenticationSteps) {
+                    step.setStepOrder(count++);
+                }
+            }
+
             localAndOutboundConfiguration.setAuthenticationSteps(authenticationSteps);
 
             String authType = getAuthenticationType(applicationId, connection);
+            if (StringUtils.equalsIgnoreCase(authType, ApplicationConstants.AUTH_TYPE_FEDERATED)
+                    || StringUtils.equalsIgnoreCase(authType, ApplicationConstants.AUTH_TYPE_FLOW)) {
+
+                if (ArrayUtils.isEmpty(authenticationSteps)) {
+                    // Although auth type is 'federated' or 'flow' we don't have any authentication steps. This can
+                    // happen due to a force delete of a federated identity provider referred by the SP. So we change
+                    // the authType to 'default'
+                    if (log.isDebugEnabled()) {
+                        log.debug("Authentication Type was " + authType + ", but the number of authentication steps " +
+                                "was zero. Therefore setting the authentication type to " +
+                                ApplicationConstants.AUTH_TYPE_DEFAULT);
+                    }
+                    authType = ApplicationConstants.AUTH_TYPE_DEFAULT;
+                }
+            }
+
             localAndOutboundConfiguration.setAuthenticationType(authType);
 
             PreparedStatement localAndOutboundConfigPrepStmt = null;
