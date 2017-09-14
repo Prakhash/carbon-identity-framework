@@ -214,9 +214,19 @@ public class UserStoreBasedIdentityDataStore extends InMemoryIdentityDataStore {
             } else if (userStoreManager instanceof ReadWriteLDAPUserStoreManager) {
                 ((ReadWriteLDAPUserStoreManager) userStoreManager).doSetUserClaimValues(username, claims, null);
             } else {
-                String msg = "Cannot persist identity data to userstore for user:%s. Unsupported userstore type:%s to" +
-                        " be used as UserStoreBasedIdentityDataStore.";
-                throw IdentityException.error(String.format(msg, username, userStoreManager.getClass().getName()));
+
+                // We don't have a way to find out whether the custom user store manager has a method
+                // to persist the claim without triggering the listeners.
+                // So print a warning message and use the 'setUserClaimValues()' method.
+                if (log.isDebugEnabled()) {
+                    String logMessage = String.format("Can't figure out whether the user store '%s' has a method " +
+                                    "to persist the claim directly without triggering the listeners. " +
+                                    "Continuing with the setUserClaimValues() API method which triggers the listeners.",
+                            userStoreManager.getClass().getName());
+                    log.debug(logMessage);
+                }
+
+                userStoreManager.setUserClaimValues(username, claims, null);
             }
 
         } catch (org.wso2.carbon.user.api.UserStoreException e) {

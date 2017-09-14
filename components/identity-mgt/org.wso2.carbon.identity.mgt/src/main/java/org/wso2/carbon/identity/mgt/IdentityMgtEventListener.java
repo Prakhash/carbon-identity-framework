@@ -1000,6 +1000,20 @@ public class IdentityMgtEventListener extends AbstractIdentityUserOperationEvent
             isAccountLocked = Boolean.parseBoolean(accountLocked);
         }
 
+        // If the account is being locked and a reason is not given,
+        // assume that the account is being locked by the admin.
+        String accountLockReason = claims.get(UserIdentityDataStore.ACCOUNT_LOCKED_REASON);
+        if (isAccountLocked && StringUtils.isBlank(accountLockReason)) {
+
+            if (log.isDebugEnabled()) {
+                log.debug(String.format("The account of the user '%s' is being locked, but a reason is not set. " +
+                        "Defaulting the account lock reason to 'ADMIN_INITIATED'", userName));
+            }
+
+            accountLockReason = IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString();
+            claims.put(UserIdentityDataStore.ACCOUNT_LOCKED_REASON, accountLockReason);
+        }
+
         // Top level try and finally blocks are used to unset thread local variables
         try {
             if (!IdentityUtil.threadLocalProperties.get().containsKey(DO_PRE_SET_USER_CLAIM_VALUES)) {
@@ -1022,7 +1036,7 @@ public class IdentityMgtEventListener extends AbstractIdentityUserOperationEvent
                 if (isAccountLocked) {
                     IdentityUtil.clearIdentityErrorMsg();
                     IdentityErrorMsgContext customErrorMessageContext = new IdentityErrorMsgContext(UserCoreConstants.
-                            ErrorCode.USER_IS_LOCKED + ":" + IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString());
+                            ErrorCode.USER_IS_LOCKED + ":" + accountLockReason);
                     IdentityUtil.setIdentityErrorMsg(customErrorMessageContext);
                 } else if (isAccountDisabled) {
                     IdentityUtil.clearIdentityErrorMsg();
@@ -1049,11 +1063,6 @@ public class IdentityMgtEventListener extends AbstractIdentityUserOperationEvent
                             || claim.getKey().contains(UserCoreConstants.ClaimTypeURIs.IDENTITY_CLAIM_URI)) {
                         String key = claim.getKey();
                         String value = claim.getValue();
-                        if (UserIdentityDataStore.ACCOUNT_LOCK.equals(key) && (Boolean.TRUE.toString()).
-                                equalsIgnoreCase(value)) {
-                            identityDTO.getUserDataMap().put(UserIdentityDataStore.ACCOUNT_LOCKED_REASON,
-                                    IdentityMgtConstants.LockedReason.ADMIN_INITIATED.toString());
-                        }
                         identityDTO.setUserIdentityDataClaim(key, value);
                         it.remove();
                     }
