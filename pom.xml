@@ -909,6 +909,17 @@
                 <artifactId>encoder</artifactId>
                 <version>${encoder.wso2.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.wso2.carbon.registry</groupId>
+                <artifactId>org.wso2.carbon.registry.common</artifactId>
+                <version>${org.wso2.carbon.registry.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.wso2.carbon.registry</groupId>
+                <artifactId>org.wso2.carbon.registry.indexing</artifactId>
+                <version>${org.wso2.carbon.registry.version}</version>
+            </dependency>
             <!--Components Dependencies Ends-->
 
             <!--Composite Feature Dependency-->
@@ -1347,6 +1358,8 @@
         <carbon.logging.imp.pkg.version.range>[1.2.17, 2.0.0)</carbon.logging.imp.pkg.version.range>
         <carbon.captcha.mgt.version>4.5.2</carbon.captcha.mgt.version>
         <carbon.captcha.mgt.imp.pkg.version.range>[4.5.0,5.0.0)</carbon.captcha.mgt.imp.pkg.version.range>
+        <carbon.registry.common.imp.pkg.version.range>[0.0.0,1.0.0)</carbon.registry.common.imp.pkg.version.range>
+        <carbon.registry.indexing.imp.pkg.version.range>[4.5.0,5.0.0)</carbon.registry.indexing.imp.pkg.version.range>
 
         <!-- Axis2 Version -->
         <axis2.wso2.version>1.6.1.wso2v12</axis2.wso2.version>
@@ -1540,6 +1553,7 @@
         <ehcache.version>1.5.0.wso2v3</ehcache.version>
 
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
+        <org.wso2.carbon.registry.version>4.5.4</org.wso2.carbon.registry.version>
     </properties>
 
     <build>

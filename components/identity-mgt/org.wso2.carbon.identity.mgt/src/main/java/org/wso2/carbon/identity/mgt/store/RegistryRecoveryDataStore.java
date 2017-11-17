@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.mgt.store;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
@@ -26,15 +27,19 @@ import org.wso2.carbon.identity.mgt.IdentityMgtConfig;
 import org.wso2.carbon.identity.mgt.constants.IdentityMgtConstants;
 import org.wso2.carbon.identity.mgt.dto.UserRecoveryDataDO;
 import org.wso2.carbon.identity.mgt.internal.IdentityMgtServiceComponent;
+import org.wso2.carbon.registry.common.ResourceData;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.exceptions.ResourceNotFoundException;
+import org.wso2.carbon.registry.indexing.RegistryConfigLoader;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class RegistryRecoveryDataStore implements UserRecoveryDataStore {
@@ -43,6 +48,12 @@ public class RegistryRecoveryDataStore implements UserRecoveryDataStore {
 
     private static final String USE_HASHED_USERNAME_PROPERTY = "UserInfoRecovery.UseHashedUserNames";
     private static final String USERNAME_HASH_ALG_PROPERTY = "UserInfoRecovery.UsernameHashAlg";
+    // Registry search filed properties and values
+    public static final String REGISTRY_SEARCH_FIELD_PROPERTY_NAME = "propertyName";
+    public static final String REGISTRT_SEARCH_FIELD_RIGHT_PROPERTY_VALUE = "rightPropertyValue";
+    public static final String REGISTRY_SEARCH_FIELD_RIGHT_OP = "rightOp";
+    public static final String REGISTRY_SEARCH_FIELD_RIGHT_OP_EQ = "eq";
+    private static final String REGISTRY_INDEXING_ENABLED = "Identity.Mgt.Registry.Indexing";
 
     @Override
     public void store(UserRecoveryDataDO recoveryDataDO) throws IdentityException {
@@ -53,7 +64,12 @@ public class RegistryRecoveryDataStore implements UserRecoveryDataStore {
             registry.beginTransaction();
             Resource resource = registry.newResource();
             resource.setProperty(SECRET_KEY, recoveryDataDO.getSecret());
-            resource.setProperty(USER_ID, recoveryDataDO.getUserName());
+            /*
+            Converted username to lower case to search the resource over 'userId' property easily, as username
+            included in the registry resource path is always converted to lowercase, and at any point case sensitive
+            usernames are not supported.
+             */
+            resource.setProperty(USER_ID, recoveryDataDO.getUserName().toLowerCase());
             resource.setProperty(EXPIRE_TIME, recoveryDataDO.getExpireTime());
             resource.setVersionableChange(false);
             String confirmationKeyPath = IdentityMgtConstants.IDENTITY_MANAGEMENT_DATA + "/" + recoveryDataDO.getCode
@@ -239,56 +255,156 @@ public class RegistryRecoveryDataStore implements UserRecoveryDataStore {
 
     private void deleteOldResourcesIfFound(Registry registry, String userName, String secretKeyPath) {
 
-        Collection collection = null;
+        boolean useRegistryIndexing = Boolean.parseBoolean(IdentityMgtConfig.getInstance().getProperty
+                (REGISTRY_INDEXING_ENABLED));
+        if (useRegistryIndexing && RegistryConfigLoader.getInstance().IsStartIndexing()) {
+
+            if (log.isDebugEnabled()) {
+                log.debug("Property: " + REGISTRY_INDEXING_ENABLED + " is enabled. Switching to registry search mode " +
+                        "to delete old confirmation codes.");
+            }
+            deleteOldConfirmationCodesByRegistrySearch(registry, userName, secretKeyPath);
+
+        } else {
+
+            if (log.isDebugEnabled()) {
+                log.debug("Deleting old confirmation codes iterating over registry resource collection at: " +
+                        secretKeyPath);
+            }
+            deleteOldConfirmationCodesByResourceIteration(registry, userName, secretKeyPath);
+        }
+    }
+
+    private void deleteOldConfirmationCodesByRegistrySearch(Registry registry, String username, String
+            confimationCodePath) {
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put(REGISTRY_SEARCH_FIELD_PROPERTY_NAME, UserRecoveryDataStore.USER_ID);
+        /*
+        Convert the username to lowercase as 'userId' property always includes the lowercase username.
+        @see #store
+         */
+        fields.put(REGISTRT_SEARCH_FIELD_RIGHT_PROPERTY_VALUE, username.toLowerCase());
+        fields.put(REGISTRY_SEARCH_FIELD_RIGHT_OP, REGISTRY_SEARCH_FIELD_RIGHT_OP_EQ);
+        ResourceData[] searchResults = null;
         try {
-            collection = (Collection) registry.get(secretKeyPath.toLowerCase());
+            searchResults = IdentityMgtServiceComponent.getAttributeSearchService().search(fields);
         } catch (RegistryException e) {
-            log.error("Error while deleting the old confirmation code. Unable to find data collection in registry." + e);
+            log.error("Error while deleting the old confirmation code. Unable to search resources in registry " +
+                    "for: [" + REGISTRY_SEARCH_FIELD_PROPERTY_NAME + " - " + UserRecoveryDataStore.USER_ID + ", " +
+                    REGISTRT_SEARCH_FIELD_RIGHT_PROPERTY_VALUE + " - " + username + ", " +
+                    REGISTRY_SEARCH_FIELD_RIGHT_OP + " - " + REGISTRY_SEARCH_FIELD_RIGHT_OP_EQ + "]", e);
         }
 
-        //Introduced property to fix resource not being introduced deleted when special characters are present.
-        String userNameToValidate = userName;
-        String useHashedUserName =
-                IdentityMgtConfig.getInstance().getProperty(USE_HASHED_USERNAME_PROPERTY);
-        if (Boolean.parseBoolean(useHashedUserName)) {
-            String hashAlg = IdentityMgtConfig.getInstance().getProperty(USERNAME_HASH_ALG_PROPERTY);
-            try {
-                userNameToValidate = hashString(userName, hashAlg);
-            } catch (NoSuchAlgorithmException e) {
-                log.error("Invalid hash algorithm " + hashAlg, e);
+        if (searchResults != null && !ArrayUtils.isEmpty(searchResults)) {
+
+            if (log.isDebugEnabled()) {
+                log.debug("Found: " + searchResults.length + " no of resources for search: [" +
+                        REGISTRY_SEARCH_FIELD_PROPERTY_NAME + " - " + UserRecoveryDataStore.USER_ID + ", " +
+                        REGISTRT_SEARCH_FIELD_RIGHT_PROPERTY_VALUE + " - " + username + ", " +
+                        REGISTRY_SEARCH_FIELD_RIGHT_OP + " - " + REGISTRY_SEARCH_FIELD_RIGHT_OP_EQ + "]");
+            }
+
+            for (ResourceData resource : searchResults) {
+                String resourcePath = resource.getResourcePath();
+                if (resourcePath != null && resourcePath.contains(confimationCodePath)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Matching resource found for user: " + username + " at resource path : " + resource
+                                .getResourcePath());
+                    }
+
+                    String resourcePathRelativeToConfigRegistry = resource.getResourcePath().substring
+                            (RegistryConstants.CONFIG_REGISTRY_BASE_PATH.length());
+                    try {
+                        deleteRegistryResource(registry, resourcePathRelativeToConfigRegistry);
+                    } catch (RegistryException e) {
+                        log.error("Error while deleting the old confirmation code, for user: " + username + " at " +
+                                "resource path: " + resourcePathRelativeToConfigRegistry, e);
+                    }
+                }
+            }
+        } else {
+
+            if (log.isDebugEnabled()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("No registry resource found for search: [" + REGISTRY_SEARCH_FIELD_PROPERTY_NAME + " - " +
+                            "" + "" + UserRecoveryDataStore.USER_ID + ", " +
+                            REGISTRT_SEARCH_FIELD_RIGHT_PROPERTY_VALUE + " - " + username + ", " +
+                            REGISTRY_SEARCH_FIELD_RIGHT_OP + " - " + REGISTRY_SEARCH_FIELD_RIGHT_OP_EQ + "]");
+                }
             }
         }
+    }
 
+    private void deleteOldConfirmationCodesByResourceIteration(Registry registry, String username, String
+            confimationCodePath) {
+
+        Collection collection = null;
         try {
-            if (collection != null) {
+            collection = (Collection) registry.get(confimationCodePath.toLowerCase());
+        } catch (RegistryException e) {
+            log.error("Error while deleting the old confirmation code for user: " + username + ". Cannot find " +
+                    "resource collection at resource path: " + confimationCodePath, e);
+        }
+
+        if (collection != null) {
+
+            // Use username hashing to fix resource not being deleted when special characters are
+            // present in username.
+            String userNameToValidate = username;
+            String useHashedUserName = IdentityMgtConfig.getInstance().getProperty(USE_HASHED_USERNAME_PROPERTY);
+            if (Boolean.parseBoolean(useHashedUserName)) {
+                String hashAlg = IdentityMgtConfig.getInstance().getProperty(USERNAME_HASH_ALG_PROPERTY);
+                try {
+                    userNameToValidate = hashString(username, hashAlg);
+                } catch (NoSuchAlgorithmException e) {
+                    log.error("Invalid hash algorithm " + hashAlg, e);
+                }
+            }
+
+            try {
                 String[] resources = collection.getChildren();
                 for (String resource : resources) {
                     String[] splittedResource = resource.split("___");
                     if (splittedResource.length == 3) {
                         //PRIMARY USER STORE
                         if (resource.contains("___" + userNameToValidate.toLowerCase() + "___")) {
-
-                            registry.beginTransaction();
-                            // Check whether the resource still exists for concurrent cases.
-                            if (registry.resourceExists(resource)) {
-                                registry.delete(resource);
-                                registry.commitTransaction();
-                            } else {
-                                // Already deleted by another thread. Do nothing.
-                                registry.rollbackTransaction();
-                                if (log.isDebugEnabled()) {
-                                    log.debug("Confirmation code already deleted in path of resource : " + resource);
-                                }
-                            }
+                            deleteRegistryResource(registry, resource);
                         }
                     } else if (splittedResource.length == 2) {
                         //SECONDARY USER STORE. Resource is a collection.
-                        deleteOldResourcesIfFound(registry, userName, resource);
+                        deleteOldResourcesIfFound(registry, username, resource);
                     }
                 }
+            } catch (RegistryException e) {
+                log.error("Error while deleting the old confirmation code for user: " + username + " at resource " +
+                        "" + "path: " + confimationCodePath, e);
             }
-        } catch (RegistryException e) {
-            log.error("Error while deleting the old confirmation code \n" + e);
+        } else {
+
+            if (log.isDebugEnabled()) {
+                log.debug("No registry resource found at path: " + confimationCodePath);
+            }
+        }
+    }
+
+    private void deleteRegistryResource(Registry registry, String resourcePathRelativeToRegistry) throws
+            RegistryException {
+
+        registry.beginTransaction();
+        // Check whether the resource still exists for concurrent cases.
+        if (registry.resourceExists(resourcePathRelativeToRegistry)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Deleting registry resource: " + resourcePathRelativeToRegistry);
+            }
+            registry.delete(resourcePathRelativeToRegistry);
+            registry.commitTransaction();
+        } else {
+            // Already deleted by another thread. Do nothing.
+            registry.rollbackTransaction();
+            if (log.isDebugEnabled()) {
+                log.debug("Registry resource: " + resourcePathRelativeToRegistry + " is already deleted.");
+            }
         }
     }
 

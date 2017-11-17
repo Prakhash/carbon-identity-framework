@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.mgt.listener.UserOperationsNotificationListener;
 import org.wso2.carbon.identity.mgt.store.RegistryCleanUpService;
 import org.wso2.carbon.identity.mgt.util.UserIdentityManagementUtil;
 import org.wso2.carbon.identity.notification.mgt.NotificationSender;
+import org.wso2.carbon.registry.common.AttributeSearchService;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
@@ -68,6 +69,9 @@ import java.util.Hashtable;
  * @scr.reference name="identityCoreInitializedEventService"
  * interface="org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent" cardinality="1..1"
  * policy="dynamic" bind="setIdentityCoreInitializedEventService" unbind="unsetIdentityCoreInitializedEventService"
+ * @scr.reference name="registry.search.component"
+ * interface="org.wso2.carbon.registry.common.AttributeSearchService"
+ * cardinality="1..1" policy="dynamic" bind="setAttributeSearchService" unbind="unsetAttributeSearchService"
  */
 
 public class IdentityMgtServiceComponent {
@@ -82,6 +86,7 @@ public class IdentityMgtServiceComponent {
     private static ConfigurationContextService configurationContextService;
     private static RecoveryProcessor recoveryProcessor;
     private static NotificationSender notificationSender;
+    private static AttributeSearchService attributeSearchService;
 
     public static RealmService getRealmService() {
         return realmService;
@@ -238,4 +243,23 @@ is started */
 is started */
     }
 
+    protected void setAttributeSearchService(AttributeSearchService searchService) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Setting Registry Attribute Search Service");
+        }
+        attributeSearchService = searchService;
+    }
+
+    protected void unsetAttributeSearchService(AttributeSearchService searchService) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Unsetting Registry Attribute Search Service");
+        }
+        attributeSearchService = null;
+    }
+
+    public static AttributeSearchService getAttributeSearchService() {
+        return attributeSearchService;
+    }
 }
