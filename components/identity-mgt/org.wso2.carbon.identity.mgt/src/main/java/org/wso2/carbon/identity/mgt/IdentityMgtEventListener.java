@@ -522,6 +522,8 @@ public class IdentityMgtEventListener extends AbstractIdentityUserOperationEvent
         if (log.isDebugEnabled()) {
             log.debug("Pre add user is called in IdentityMgtEventListener");
         }
+        // Normally this will be reset in postAddUser method. This is needed in case postAddUser is not executed.
+        IdentityUtil.threadLocalProperties.get().remove(EMPTY_PASSWORD_USED);
         IdentityMgtConfig config = IdentityMgtConfig.getInstance();
         try {
             // Enforcing the password policies.
@@ -691,8 +693,9 @@ public class IdentityMgtEventListener extends AbstractIdentityUserOperationEvent
             }
             return true;
         } finally {
-            // Remove thread local variable
+            // Remove thread local variables
             IdentityUtil.threadLocalProperties.get().remove(DO_POST_ADD_USER);
+            IdentityUtil.threadLocalProperties.get().remove(EMPTY_PASSWORD_USED);
         }
     }
 
